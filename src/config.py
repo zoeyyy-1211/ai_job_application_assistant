@@ -27,7 +27,7 @@ def ensure_directories() -> None:
 def get_llm_settings() -> dict:
     """读取 OpenAI-compatible API 配置；没有 Key 时返回空 Key，应用继续使用规则分析。"""
     return {
-        "api_key": os.getenv("API_KEY", "").strip(),
-        "base_url": os.getenv("BASE_URL", "https://api.openai.com/v1").strip(),
-        "model_name": os.getenv("MODEL_NAME", "gpt-4o-mini").strip(),
+        "api_key": os.getenv("LLM_API_KEY", os.getenv("API_KEY", "")).strip(),
+        "base_url": os.getenv("LLM_BASE_URL", os.getenv("BASE_URL", "https://api.openai.com/v1")).strip(),
+        "model_name": os.getenv("LLM_MODEL_NAME", os.getenv("MODEL_NAME", "gpt-4o-mini")).strip(),
     }

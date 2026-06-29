@@ -1,17 +1,20 @@
 # AI 秋招投递决策助手
 
-一个本地运行的 AI 求职辅助工具，面向 2027 届秋招场景，帮助用户完成岗位匹配分析、简历优化建议、投递记录管理和数据看板复盘。
+一个本地运行的 AI 求职辅助工具，面向 2027 届秋招场景，帮助用户完成岗位匹配分析、定制简历生成、投递记录管理和数据看板复盘。
 
-第一阶段 MVP 使用规则匹配，不强依赖 LLM。即使没有 API Key，也可以完成简历上传、JD 分析和投递记录保存。
+当前版本：`v0.2-ai-portfolio`
 
-## 功能
+## 核心功能
 
 - 上传简历：支持 PDF、DOCX、TXT。
-- 粘贴岗位 JD：支持填写公司、岗位、类型、平台、城市和备注。
-- 基础匹配分析：输出匹配度、匹配标签、已有优势、JD 高频要求、缺口能力和优化建议。
-- 投递记录管理：支持查看、筛选、更新状态、删除记录。
-- 数据看板：展示总投递数、平均匹配度、状态分布和岗位类型分布。
-- LLM 接口占位：支持通过 `.env` 配置 OpenAI-compatible API，后续可增强分析能力。
+- 粘贴岗位 JD：填写公司、岗位、类型、平台、城市、投递链接和备注。
+- AI 岗位匹配分析：支持 OpenAI-compatible API，输出结构化 JSON。
+- 规则 fallback：无 API Key 或 LLM 异常时仍可完成分析。
+- 定制简历生成：基于原始简历和分析结果生成 Markdown 简历草稿。
+- 导出能力：支持导出定制简历 Markdown / DOCX，导出投递记录 CSV。
+- 投递记录管理：支持状态、面试进展、下一步行动、投递链接和面试备注。
+- 数据看板：展示投递数量、匹配度、状态分布、岗位类型、能力要求 Top 20 和投递趋势。
+- 作品集文档：包含 PRD、技术设计、简历项目描述和面试 Q&A。
 
 ## 安装
 
@@ -20,17 +23,23 @@ cd ai_job_application_assistant
 pip install -r requirements.txt
 ```
 
-## 配置
+如果本机 `python` 命令不可用，可以使用：
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+## 配置 LLM
 
 复制 `.env.example` 为 `.env`，按需填写：
 
-```bash
-API_KEY=
-BASE_URL=https://api.openai.com/v1
-MODEL_NAME=gpt-4o-mini
+```env
+LLM_API_KEY=
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL_NAME=gpt-4o-mini
 ```
 
-不配置 API Key 也可以运行，系统会使用规则匹配 fallback。
+不配置 `LLM_API_KEY` 也可以运行，系统会自动使用规则匹配 fallback。
 
 ## 运行
 
@@ -38,19 +47,11 @@ MODEL_NAME=gpt-4o-mini
 streamlit run app.py
 ```
 
-启动后，在浏览器打开 Streamlit 给出的本地地址。
+启动后，在浏览器打开 Streamlit 给出的本地地址，通常是：
 
-## 第一阶段测试方式
-
-1. 准备一份 TXT、PDF 或 DOCX 简历。
-2. 打开「岗位匹配分析」tab。
-3. 上传简历，填写公司、岗位、岗位类型、平台、城市。
-4. 粘贴一段岗位 JD。
-5. 点击「开始分析并保存记录」。
-6. 查看匹配分析结果。
-7. 打开「投递记录管理」，检查记录是否保存。
-8. 修改状态或面试进展。
-9. 打开「数据看板」，检查统计卡片和图表是否更新。
+```text
+http://localhost:8501
+```
 
 ## 项目结构
 
@@ -60,7 +61,7 @@ ai_job_application_assistant/
   requirements.txt
   README.md
   .env.example
-  data/applications.db
+  data/
   uploads/
   outputs/
   src/
@@ -73,13 +74,18 @@ ai_job_application_assistant/
     resume_generator.py
     dashboard.py
     utils.py
-  docs/PRD.md
+  docs/
+    PRD.md
+    TECH_DESIGN.md
+    RESUME_BULLETS.md
+    INTERVIEW_QA.md
 ```
 
-## 后续迭代
+## 作品集讲述方式
 
-- 接入真实 LLM 分析，输出结构化 JSON。
-- 生成更完整的定制简历版本。
-- 增加分析结果详情页。
-- 增加投递记录编辑更多字段。
-- 增加高频能力要求统计和趋势分析。
+这个项目不是一次性完成，而是按产品迭代推进：
+
+- `v0.1-mvp`：完成本地 MVP，包括规则匹配、投递记录和基础看板。
+- `v0.2-ai-portfolio`：补齐 LLM 增强分析、定制简历生成、投递管理增强、数据看板增强和作品集文档。
+
+面试时可以围绕“用户痛点 -> MVP 验证 -> AI 增强 -> 数据复盘 -> 风险控制 -> 后续迭代”来讲。

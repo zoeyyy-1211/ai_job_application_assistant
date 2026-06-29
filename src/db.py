@@ -9,6 +9,7 @@ from src.config import DB_PATH, ensure_directories
 
 
 STATUSES = ["待投递", "已投递", "笔试", "一面", "二面", "HR面", "Offer", "已拒绝", "已挂", "暂缓"]
+NEXT_ACTIONS = ["修改简历", "准备笔试", "准备一面", "等待反馈", "跟进 HR", "暂无"]
 
 
 def get_connection() -> sqlite3.Connection:
@@ -37,12 +38,24 @@ def init_db() -> None:
                 status TEXT DEFAULT '待投递',
                 interview_stage TEXT,
                 notes TEXT,
+                application_url TEXT,
+                next_action TEXT,
+                interview_notes TEXT,
                 analysis_json TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
             """
         )
+        existing_columns = {row["name"] for row in conn.execute("PRAGMA table_info(applications)").fetchall()}
+        migrations = {
+            "application_url": "ALTER TABLE applications ADD COLUMN application_url TEXT",
+            "next_action": "ALTER TABLE applications ADD COLUMN next_action TEXT",
+            "interview_notes": "ALTER TABLE applications ADD COLUMN interview_notes TEXT",
+        }
+        for column, statement in migrations.items():
+            if column not in existing_columns:
+                conn.execute(statement)
         conn.commit()
 
 
@@ -61,6 +74,9 @@ def create_application(data: dict[str, Any]) -> int:
         "status": data.get("status", "待投递"),
         "interview_stage": data.get("interview_stage", ""),
         "notes": data.get("notes", ""),
+        "application_url": data.get("application_url", ""),
+        "next_action": data.get("next_action", "修改简历"),
+        "interview_notes": data.get("interview_notes", ""),
         "analysis_json": data.get("analysis_json", ""),
         "created_at": now,
         "updated_at": now,
@@ -70,10 +86,12 @@ def create_application(data: dict[str, Any]) -> int:
             """
             INSERT INTO applications (
                 company, position, position_type, platform, city, jd_text, resume_text,
-                match_score, status, interview_stage, notes, analysis_json, created_at, updated_at
+                match_score, status, interview_stage, notes, application_url, next_action,
+                interview_notes, analysis_json, created_at, updated_at
             ) VALUES (
                 :company, :position, :position_type, :platform, :city, :jd_text, :resume_text,
-                :match_score, :status, :interview_stage, :notes, :analysis_json, :created_at, :updated_at
+                :match_score, :status, :interview_stage, :notes, :application_url, :next_action,
+                :interview_notes, :analysis_json, :created_at, :updated_at
             )
             """,
             payload,
@@ -88,17 +106,26 @@ def get_applications() -> pd.DataFrame:
         return pd.read_sql_query("SELECT * FROM applications ORDER BY created_at DESC", conn)
 
 
-def update_application(application_id: int, status: str, interview_stage: str, notes: str) -> None:
-    """更新投递状态、面试进展和备注。"""
+def update_application(
+    application_id: int,
+    status: str,
+    interview_stage: str,
+    notes: str,
+    application_url: str = "",
+    next_action: str = "",
+    interview_notes: str = "",
+) -> None:
+    """更新投递状态、面试进展、备注、链接和下一步行动。"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with get_connection() as conn:
         conn.execute(
             """
             UPDATE applications
-            SET status = ?, interview_stage = ?, notes = ?, updated_at = ?
+            SET status = ?, interview_stage = ?, notes = ?, application_url = ?,
+                next_action = ?, interview_notes = ?, updated_at = ?
             WHERE id = ?
             """,
-            (status, interview_stage, notes, now, application_id),
+            (status, interview_stage, notes, application_url, next_action, interview_notes, now, application_id),
         )
         conn.commit()
 
